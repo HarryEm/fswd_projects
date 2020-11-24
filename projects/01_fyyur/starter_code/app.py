@@ -8,6 +8,7 @@ import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
@@ -21,11 +22,13 @@ moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 
-# TODO: connect to a local postgresql database
+# connect to a local postgresql database
+migrate = Migrate(app, db)
 
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
+
 
 class Venue(db.Model):
     __tablename__ = 'Venue'
@@ -39,7 +42,19 @@ class Venue(db.Model):
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
 
+    genres = db.Column(db.String(120))
+    currently_seeking = db.Column(db.Boolean)
+    website_link = db.Column(db.String(120))
+
+    # Venue to Show is a one to many relationship
+    # usage: venue = Venue(...); show.venue = venue
+    shows = db.relationship('Show', backref='venue', lazy=True)
+
+    def __repr__(self):
+        return '<Venue: {} {}>'.format(self.id, self.name)
+
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
+
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
@@ -53,9 +68,35 @@ class Artist(db.Model):
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
 
+    currently_seeking = db.Column(db.Boolean)
+    website_link = db.Column(db.String(120))
+
+    shows = db.relationship('Show', backref="artist_shows")
+
+    def __repr__(self):
+        return '<Artist: {} {}>'.format(self.id, self.name)
+
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+
+
+class Show(db.Model):
+    __tablename__ = 'Show'
+
+    id = db.Column(db.Integer, primary_key=True)
+    date_time = db.Column(db.String(120))
+    image_link = db.Column(db.String(500))
+
+    # Show to Artist is a many to one relationship
+    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
+    artist = db.relationship('Artist', backref='artist')
+
+    # Venue to Show is a one to many relationship
+    venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
+
+    def __repr__(self):
+        return '<Show: {} @ {}>'.format(self.id, self.venue)
 
 #----------------------------------------------------------------------------#
 # Filters.
