@@ -112,6 +112,31 @@ def format_datetime(value, format='medium'):
 
 app.jinja_env.filters['datetime'] = format_datetime
 
+
+# def get_upcoming_or_past_shows(match):
+#   '''
+#   Helper function to split an object's shows into past and present.
+#   Parameters
+#   -----------
+#   match : Venue, Artist
+#     An object with shows related to it which can be split by upcoming / past
+#
+#   Returns
+#   -------
+#   dict
+#     A dictionary containing a list of Shows both upcoming and past
+#   '''
+#   breakpoint()
+#
+#   now = datetime.now()
+#   upcoming_past_shows_dict = {
+#     "upcoming_shows": list(filter(lambda x: x.start_time >= now, shows)),
+#     "past_shows": list(filter(lambda x: x.start_time < now, shows))
+#   }
+#
+#   return upcoming_past_shows_dict
+
+
 #----------------------------------------------------------------------------#
 # Controllers.
 #----------------------------------------------------------------------------#
@@ -158,7 +183,7 @@ def venues():
     'venues', func.json_agg(func.json_build_object(
       'id', Venue.id,
       'name', Venue.name,
-      'num_upcoming_shows', 1
+      'num_upcoming_shows', len(Show.query.filter_by(venue_id=Venue.id).all())
     )
     ))).group_by(Venue.city, Venue.state).all()
 
@@ -364,7 +389,25 @@ def search_artists():
       "num_upcoming_shows": 0,
     }]
   }
-  return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+  search_term=request.form.get('search_term', '')
+
+  matches = Artist.query.filter(Artist.name.ilike(f"%{search_term}%")).all()
+
+  now = datetime.now()
+
+  response={
+    "count": len(matches),
+    "data": [{
+      "id": match.id,
+      "name": match.name,
+      # "num_upcoming_shows": len(list(filter(lambda x: x.start_time > datetime.now(), match.shows))),
+      "num_upcoming_shows": len(get_upcoming_or_past_shows(match)['upcoming_shows'])
+      }
+      for match in matches
+    ]
+  }
+
+  return render_template('pages/search_artists.html', results=response, search_term=search_term)
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
