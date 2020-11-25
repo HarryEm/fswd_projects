@@ -16,6 +16,8 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+
+from datetime import datetime
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -83,7 +85,7 @@ class Show(db.Model):
     __tablename__ = 'Show'
 
     id = db.Column(db.Integer, primary_key=True)
-    start_time = db.Column(db.String(120))
+    start_time = db.Column(db.DateTime, default=datetime.utcnow)
     # image_link = db.Column(db.String(500))
 
     # Show to Artist is a many to one relationship
@@ -169,15 +171,34 @@ def search_venues():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  search_term = request.form.get('search_term', '')
+  # breakpoint()
+  # response={
+  #   "count": 1,
+  #   "data": [{
+  #     "id": 2,
+  #     "name": "The Dueling Pianos Bar",
+  #     "num_upcoming_shows": 0,
+  #   }]
+  # }
+
+  matches = Venue.query.filter(Venue.name.ilike(f"%{search_term}%")).all()
+
+  now = datetime.now()
+
   response={
-    "count": 1,
+    "count": len(matches),
     "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+      "id": match.id,
+      "name": match.name,
+      "num_upcoming_shows": len(list(filter(lambda x: x.start_time > datetime.now(), match.shows))),
+      }
+      for match in matches
+    ]
   }
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+
+
+  return render_template('pages/search_venues.html', results=response, search_term=search_term)
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -573,7 +594,7 @@ def shows():
       'artist_id': show.artist_id,
       'artist_name': show.artist_shows.name,
       'artist_image_link': show.artist_shows.image_link,
-      'start_time': show.start_time
+      'start_time': show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
       }
     for show in Show.query.all()
   ]
