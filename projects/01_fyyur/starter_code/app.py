@@ -7,7 +7,7 @@ import json
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect,\
-  url_for, jsonify, abort
+    url_for, jsonify, abort
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
@@ -86,11 +86,9 @@ class Show(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     start_time = db.Column(db.DateTime, default=datetime.utcnow)
-    # image_link = db.Column(db.String(500))
 
     # Show to Artist is a many to one relationship
     artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
-    # artist = db.relationship('Artist', backref='artist')
 
     # Venue to Show is a one to many relationship
     venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
@@ -113,28 +111,34 @@ def format_datetime(value, format='medium'):
 app.jinja_env.filters['datetime'] = format_datetime
 
 
-# def get_upcoming_or_past_shows(match):
-#   '''
-#   Helper function to split an object's shows into past and present.
-#   Parameters
-#   -----------
-#   match : Venue, Artist
-#     An object with shows related to it which can be split by upcoming / past
-#
-#   Returns
-#   -------
-#   dict
-#     A dictionary containing a list of Shows both upcoming and past
-#   '''
-#   breakpoint()
-#
-#   now = datetime.now()
-#   upcoming_past_shows_dict = {
-#     "upcoming_shows": list(filter(lambda x: x.start_time >= now, shows)),
-#     "past_shows": list(filter(lambda x: x.start_time < now, shows))
-#   }
-#
-#   return upcoming_past_shows_dict
+def get_upcoming_or_past_shows(object, id_field):
+  '''
+  Helper function to split an object's shows into past and present.
+  Parameters
+  -----------
+  object : Venue, Artist
+    An object with shows related to it which can be split by upcoming / past
+  id_field: the object's attribute which is its primary key
+
+  Returns
+  -------
+  dict
+    A dictionary containing a list of Shows both upcoming and past
+  '''
+  now = datetime.now()
+  if id_field == 'venue_id':
+    shows = Show.query.filter_by(venue_id=object.id).all()
+  elif id_field == 'artist_id':
+    shows = Show.query.filter_by(artist_id=object.id).all()
+  else:
+    raise("Must pass in either a Venue or Artist")
+
+  upcoming_past_shows_dict = {
+    "upcoming_shows": list(filter(lambda x: x.start_time >= now, shows)),
+    "past_shows": list(filter(lambda x: x.start_time < now, shows))
+  }
+
+  return upcoming_past_shows_dict
 
 
 #----------------------------------------------------------------------------#
@@ -183,13 +187,15 @@ def venues():
     'venues', func.json_agg(func.json_build_object(
       'id', Venue.id,
       'name', Venue.name,
-      'num_upcoming_shows', len(Show.query.filter_by(venue_id=Venue.id).all())
+      'num_upcoming_shows', len(get_upcoming_or_past_shows(Venue, 'venue_id')['upcoming_shows'])
     )
     ))).group_by(Venue.city, Venue.state).all()
 
   # Remove inner tuples
   data = [q[0] for q in query]
-  return render_template('pages/venues.html', areas=data);
+
+  return render_template('pages/venues.html', areas=data)
+
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -197,7 +203,6 @@ def search_venues():
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
   search_term = request.form.get('search_term', '')
-  # breakpoint()
   # response={
   #   "count": 1,
   #   "data": [{
@@ -211,19 +216,32 @@ def search_venues():
 
   now = datetime.now()
 
-  response={
-    "count": len(matches),
-    "data": [{
-      "id": match.id,
-      "name": match.name,
-      "num_upcoming_shows": len(list(filter(lambda x: x.start_time > datetime.now(), match.shows))),
+  response = {
+      "count": len(matches),
+      "data": [
+      {
+        "id": match.id,
+        "name": match.name,
+        "num_upcoming_shows": len(get_upcoming_or_past_shows(match, 'venue_id')['upcoming_shows'])
       }
-      for match in matches
-    ]
+          for match in matches]
   }
 
+  return render_template('pages/search_venues.html',
+                         results=response,
+                         search_term=search_term)
 
-  return render_template('pages/search_venues.html', results=response, search_term=search_term)
+
+def get_artist_info(shows_list):
+  return [
+      {
+          "artist_id": show.artist_id,
+          "artist_name": show.artist_shows.name,
+          "artist_image_link": show.artist_shows.image_link,
+          "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+      }
+      for show in shows_list]
+
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -306,18 +324,29 @@ def show_venue(venue_id):
   #   "past_shows_count": 1,
   #   "upcoming_shows_count": 1,
   # }
-  # venue_list = [data1, data2, data3]
-  venue_list = [venue.__dict__ for venue in Venue.query.all()]
-  data = list(filter(lambda d: d['id'] == venue_id, venue_list))[0]
+
+  venue = list(filter(lambda v: v.id == venue_id, Venue.query.all()))[0]
+
+  data = venue.__dict__
+  past_shows = get_upcoming_or_past_shows(venue, 'venue_id')['past_shows']
+  data['past_shows'] = get_artist_info(past_shows)
+  data['past_shows_count'] = len(data['past_shows'])
+
+  upcoming_shows = get_upcoming_or_past_shows(venue, 'venue_id')['upcoming_shows']
+  data['upcoming_shows'] = get_artist_info(upcoming_shows)
+  data['upcoming_shows_count'] = len(data['upcoming_shows'])
+
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
 #  ----------------------------------------------------------------
 
+
 @app.route('/venues/create', methods=['GET'])
 def create_venue_form():
   form = VenueForm()
   return render_template('forms/new_venue.html', form=form)
+
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
@@ -331,7 +360,7 @@ def create_venue_submission():
       error = True
       db.session.rollback()
       print(sys.exc_info())
-      flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
+      flash(f"An error occurred. Venue {request.form['name']} could not be listed.")
   finally:
       db.session.close()
   if error:
@@ -381,33 +410,44 @@ def search_artists():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
-  }
+  # response={
+  #   "count": 1,
+  #   "data": [{
+  #     "id": 4,
+  #     "name": "Guns N Petals",
+  #     "num_upcoming_shows": 0,
+  #   }]
+  # }
   search_term=request.form.get('search_term', '')
-
   matches = Artist.query.filter(Artist.name.ilike(f"%{search_term}%")).all()
 
   now = datetime.now()
 
-  response={
+  response = {
     "count": len(matches),
     "data": [{
       "id": match.id,
       "name": match.name,
-      # "num_upcoming_shows": len(list(filter(lambda x: x.start_time > datetime.now(), match.shows))),
-      "num_upcoming_shows": len(get_upcoming_or_past_shows(match)['upcoming_shows'])
+      "num_upcoming_shows": len(get_upcoming_or_past_shows(match, 'artist_id')['upcoming_shows'])
       }
       for match in matches
     ]
   }
 
-  return render_template('pages/search_artists.html', results=response, search_term=search_term)
+  return render_template('pages/search_artists.html', results=response,
+                         search_term=search_term)
+
+
+def get_venue_info(shows_list):
+  return [
+      {
+          "venue_id": show.venue_id,
+          "venue_name": show.venue.name,
+          "venue_image_link": show.venue.image_link,
+          "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+      }
+      for show in shows_list]
+
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
@@ -484,9 +524,21 @@ def show_artist(artist_id):
   #   "past_shows_count": 0,
   #   "upcoming_shows_count": 3,
   # }
-  artist_list = [artist.__dict__ for artist in Artist.query.all()]
-  data = list(filter(lambda d: d['id'] == artist_id, artist_list))[0]
+  # artist_list = [artist.__dict__ for artist in Artist.query.all()]
+  # data = list(filter(lambda d: d['id'] == artist_id, artist_list))[0]
   # data = list(filter(lambda d: d['id'] == artist_id, [data1, data2, data3]))[0]
+
+  artist = list(filter(lambda v: v.id == artist_id, Artist.query.all()))[0]
+
+  data = artist.__dict__
+  past_shows = get_upcoming_or_past_shows(artist, 'artist_id')['past_shows']
+  data['past_shows'] = get_venue_info(past_shows)
+  data['past_shows_count'] = len(data['past_shows'])
+
+  upcoming_shows = get_upcoming_or_past_shows(artist, 'artist_id')['upcoming_shows']
+  data['upcoming_shows'] = get_venue_info(upcoming_shows)
+  data['upcoming_shows_count'] = len(data['upcoming_shows'])
+
   return render_template('pages/show_artist.html', artist=data)
 
 #  Update
@@ -546,10 +598,12 @@ def edit_venue_submission(venue_id):
 #  Create Artist
 #  ----------------------------------------------------------------
 
+
 @app.route('/artists/create', methods=['GET'])
 def create_artist_form():
   form = ArtistForm()
   return render_template('forms/new_artist.html', form=form)
+
 
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
@@ -618,38 +672,28 @@ def shows():
   #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
   #   "start_time": "2035-04-15T20:00:00.000Z"
   # }]
-  # query = db.session.query(func.json_build_object(
-  #   'venue_id', Show.venue_id,
-  #   'venue_name', Venue.query.filter(Venue.id==Show.venue_id).first().name,
-  #   'artist_id', Show.artist_id,
-  #   'artist_name', Artist.artist_shows.name,
-  #   'artist_image_link', Artist.query.filter(Artist.id==Show.artist_id).first().image_link,
-  #   'start_time', Show.start_time
-  # )).all()
-  # breakpoint()
-  # Remove inner tuples
-  # data = [q[0] for q in query]
 
   data = [
       {
-      'venue_id': show.venue_id,
-      'venue_name': show.venue.name,
-      'artist_id': show.artist_id,
-      'artist_name': show.artist_shows.name,
-      'artist_image_link': show.artist_shows.image_link,
-      'start_time': show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+          'venue_id': show.venue_id,
+          'venue_name': show.venue.name,
+          'artist_id': show.artist_id,
+          'artist_name': show.artist_shows.name,
+          'artist_image_link': show.artist_shows.image_link,
+          'start_time': show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
       }
     for show in Show.query.all()
   ]
 
-  # data = [show.__dict__ for show in Show.query.all()]
   return render_template('pages/shows.html', shows=data)
+
 
 @app.route('/shows/create')
 def create_shows():
   # renders form. do not touch.
   form = ShowForm()
   return render_template('forms/new_show.html', form=form)
+
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
@@ -678,6 +722,7 @@ def create_show_submission():
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('errors/404.html'), 404
+
 
 @app.errorhandler(500)
 def server_error(error):
