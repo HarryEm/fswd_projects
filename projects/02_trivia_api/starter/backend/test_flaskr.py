@@ -28,6 +28,11 @@ class TriviaTestCase(unittest.TestCase):
             # create all tables
             self.db.create_all()
 
+        self.new_question = Question(question='What?',
+                                     answer='Oh',
+                                     category='2',
+                                     difficulty=4).format()
+
     def tearDown(self):
         """Executed after each test"""
         pass
@@ -50,7 +55,7 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertIsNotNone(data['totalQuestions'])
+        self.assertIsNotNone(data['total_questions'])
         self.assertNotEqual(len(data['questions']), 0)
         self.assertLessEqual(len(data['questions']), QUESTIONS_PER_PAGE)
 
@@ -61,16 +66,30 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
 
-    def test_delete_questions(self):
-        question_id = 5
-        total_questions = len(Question.query.all())
-        res = self.client().delete(f'/questions/{question_id}')
-        data = json.loads(res.data)
+    # def test_create_new_question(self):
+    #     res = self.client().post('/questions', json=self.new_question)
+    #     data = json.loads(res.data)
+    #
+    #     self.assertEqual(res.status_code, 200)
+    #     self.assertEqual(data['success'], True)
+    #
+    # def test_delete_questions(self):
+    #     question_id = Question.query.all()[-1].id
+    #     total_questions = len(Question.query.all())
+    #     res = self.client().delete(f'/questions/{question_id}')
+    #     data = json.loads(res.data)
+    #
+    #     self.assertEqual(res.status_code, 200)
+    #     self.assertEqual(data['success'], True)
+    #     self.assertEqual(data['deleted'], question_id)
+    #     self.assertIsNotNone(len(Question.query.all()), total_questions - 1)
 
+    def test_search_question(self):
+        res = self.client().post('/questions', json={'searchTerm': 'organ'})
+        data = json.loads(res.data)
+        
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertEqual(data['deleted'], question_id)
-        self.assertIsNotNone(len(Question.query.all()), total_questions - 1)
 
 
 # Make the tests conveniently executable

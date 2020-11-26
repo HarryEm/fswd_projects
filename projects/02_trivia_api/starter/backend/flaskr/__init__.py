@@ -60,12 +60,13 @@ def create_app(test_config=None):
   '''
   def get_paginated_questions(request,
                               questions,
+                              total_questions,
                               num_of_questions=QUESTIONS_PER_PAGE):
 
     page = request.args.get('page', 1, type=int)
-    # breakpoint()
+
     start = (page - 1) * num_of_questions
-    end = start + num_of_questions
+    end = min(start + num_of_questions, total_questions - 1)
     formatted_questions = [q.format() for q in questions]
     current_questions = formatted_questions[start:end]
 
@@ -75,7 +76,10 @@ def create_app(test_config=None):
   def get_questions():
       try:
           questions = Question.query.all()
-          current_questions = get_paginated_questions(request, questions)
+          total_questions = len(questions)
+          current_questions = get_paginated_questions(request,
+                                                      questions,
+                                                      total_questions)
 
           if len(current_questions) == 0:
               abort(404)
@@ -86,9 +90,9 @@ def create_app(test_config=None):
                     'success': True,
                     'status_code': 200,
                     'questions': current_questions,
-                    'totalQuestions': len(questions),
+                    'total_questions': total_questions,
                     'categories': categories,
-                    'currentCategory': None
+                    'current_category': None
                 })
       except Exception:
           abort(404)
@@ -114,8 +118,9 @@ def create_app(test_config=None):
                 'success': True,
                 'deleted': question_id
           })
-      except Exception:
-          abort(404)
+      except Exception as e:
+          print(e)
+          abort(422)
 
   '''@TODO:
   Create an endpoint to POST a new question,
@@ -126,6 +131,47 @@ def create_app(test_config=None):
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.
   '''
+  @app.route('/questions', methods=['POST'])
+  def add_question():
+      body = request.get_json()
+
+      search_term = body.get('searchTerm', None)
+
+      try:
+          if search_term:
+              questions = Question.query.\
+                    filter(Question.question.ilike(f'%{search_term}%')).\
+                    all()
+              questions_formatted = [q.format() for q in questions]
+
+              return jsonify({
+                        'success': True,
+                        'status_code': 200,
+                        'questions': questions_formatted,
+                        'total_questions': len(questions),
+                        'current_category': None
+              })
+          else:
+              question_text = body.get('question', None)
+              answer = body.get('answer', None)
+              category = body.get('category', None)
+              difficulty = body.get('difficulty', None)
+
+              question = Question(question=question_text,
+                                  answer=answer,
+                                  category=category,
+                                  difficulty=difficulty)
+              question.insert()
+
+              return jsonify({
+                    'success': True,
+                    'status_code': 200,
+                    'created': question.id
+              })
+
+      except Exception as e:
+          print(e)
+          abort(422)
 
   '''
   @TODO:
