@@ -31,6 +31,10 @@ def create_app(test_config=None):
                            'GET,PATCH,POST,DELETE,OPTIONS')
 
       return response
+
+  @app.route('/')
+  def hello():
+      return "Hello World"
   '''
   @TODO:
   Create an endpoint to handle GET requests
@@ -54,32 +58,66 @@ def create_app(test_config=None):
   ten questions per page and pagination at the bottom of the screen for three pages.
   Clicking on the page numbers should update the questions.
   '''
+  def get_paginated_questions(request,
+                              questions,
+                              num_of_questions=QUESTIONS_PER_PAGE):
+
+    page = request.args.get('page', 1, type=int)
+    # breakpoint()
+    start = (page - 1) * num_of_questions
+    end = start + num_of_questions
+    formatted_questions = [q.format() for q in questions]
+    current_questions = formatted_questions[start:end]
+
+    return current_questions
+
   @app.route('/questions', methods=['GET'])
   def get_questions():
-      # page = request.args.get('page', 1, type=int)
-      # print(page)
-      # questions = request.args.get('questions', None, type=list)
-      questions = [q.question for q in Question.query.all()][:10]
-      print(questions)
-      # breakpoint()
-      # request.args
-      return jsonify({
-                'questions': questions,
-                'totalQuestions': len(questions),
-                'categories': [c.type for c in Category.query.all()],
-                'currentCategory': 'Science'
-            })
+      try:
+          questions = Question.query.all()
+          current_questions = get_paginated_questions(request, questions)
+
+          if len(current_questions) == 0:
+              abort(404)
+
+          categories = [c.type for c in Category.query.all()]
+
+          return jsonify({
+                    'success': True,
+                    'status_code': 200,
+                    'questions': current_questions,
+                    'totalQuestions': len(questions),
+                    'categories': categories,
+                    'currentCategory': None
+                })
+      except Exception:
+          abort(404)
 
   '''
   @TODO:
   Create an endpoint to DELETE question using a question ID.
 
-  TEST: When you click the trash icon next to a question, the question will be removed.
+  TEST: When you click the trash icon next to a question, the question will be
+  removed.
   This removal will persist in the database and when you refresh the page.
   '''
+  @app.route('/questions/<int:question_id>', methods=['DELETE'])
+  def delete_question(question_id):
+      question = Question.query.filter(Question.id == question_id).\
+            one_or_none()
+      if not question:
+          abort(404)
+      try:
+          question.delete()
 
-  '''
-  @TODO:
+          return jsonify({
+                'success': True,
+                'deleted': question_id
+          })
+      except Exception:
+          abort(404)
+
+  '''@TODO:
   Create an endpoint to POST a new question,
   which will require the question and answer text,
   category, and difficulty score.
@@ -127,5 +165,28 @@ def create_app(test_config=None):
   Create error handlers for all expected errors
   including 404 and 422.
   '''
+  @app.errorhandler(404)
+  def not_found(error):
+      return jsonify({
+          "success": False,
+          "error": 404,
+          "message": "Not found"
+      }), 404
+
+  @app.errorhandler(422)
+  def not_found(error):
+      return jsonify({
+          "success": False,
+          "error": 422,
+          "message": "Unprocessable Entity"
+      }), 422
+
+  @app.errorhandler(500)
+  def not_found(error):
+      return jsonify({
+          "success": False,
+          "error": 500,
+          "message": "Internal Server Error"
+      }), 500
 
   return app
