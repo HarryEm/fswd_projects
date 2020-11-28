@@ -59,13 +59,11 @@ def create_app(test_config=None):
   ten questions per page and pagination at the bottom of the screen for three pages.
   Clicking on the page numbers should update the questions.
   '''
-  def get_paginated_questions(request,
-                              questions,
-                              total_questions,
-                              num_of_questions=QUESTIONS_PER_PAGE):
+  def get_paginated_questions(request, questions, total_questions):
     '''
     Return questions in batches according to a batch size of num_of_questions
     '''
+    num_of_questions=QUESTIONS_PER_PAGE
     page = request.args.get('page', 1, type=int)
 
     start = (page - 1) * num_of_questions
@@ -167,17 +165,25 @@ def create_app(test_config=None):
               category = body.get('category', None)
               difficulty = body.get('difficulty', None)
 
-              question = Question(question=question_text,
-                                  answer=answer,
-                                  category=category,
-                                  difficulty=difficulty)
-              question.insert()
+              args = [question_text, answer, category, difficulty]
 
-              return jsonify({
-                    'success': True,
-                    'status_code': 200,
-                    'created': question.id
-              })
+              # Check not None or empty and are strings
+              if (all(args) and all(type(arg) == str
+                  for arg in [question_text, answer, category])
+                  and (type(difficulty) == int)):
+                  question = Question(question=question_text,
+                                      answer=answer,
+                                      category=category,
+                                      difficulty=difficulty)
+                  question.insert()
+
+                  return jsonify({
+                        'success': True,
+                        'status_code': 200,
+                        'created': question.id
+                  })
+              else:
+                abort(400)
 
       except Exception as e:
           print(e)
@@ -261,7 +267,7 @@ def create_app(test_config=None):
               question_query = Question.query
           else:
               question_query = Question.query\
-                  .filter(Question.category == int(quiz_category_id) + 1)
+                  .filter(Question.category == int(quiz_category_id))
 
           questions = question_query\
               .filter(Question.id.notin_(previous_questions))\
@@ -276,11 +282,12 @@ def create_app(test_config=None):
           else:
               question = questions.first().format()
               previous_questions.append(question)
+              print(question)
               return jsonify({
                       'success': True,
                       'status_code': 200,
                       'question': question,
-                     })
+              })
 
       except Exception as e:
           print(e)

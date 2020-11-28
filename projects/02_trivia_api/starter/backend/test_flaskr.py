@@ -73,6 +73,22 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
 
+        # Use invalid data
+        res = self.client().post('/questions', json={'question': '',
+                                                     'answer': 'Oh',
+                                                     'category': '2',
+                                                     'difficulty': 4})
+        self.assertIsNone(data.get('previous_questions'))
+        self.assertEqual(res.status_code, 422)
+
+        # Use invalid data
+        res = self.client().post('/questions', json={'question': 44,
+                                                     'answer': 'Oh',
+                                                     'category': '2',
+                                                     'difficulty': 4})
+        self.assertIsNone(data.get('previous_questions'))
+        self.assertEqual(res.status_code, 422)
+
     def test_delete_questions(self):
         question_id = Question.query.all()[-1].id
         total_questions = len(Question.query.all())
@@ -83,6 +99,11 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertEqual(data['deleted'], question_id)
         self.assertIsNotNone(len(Question.query.all()), total_questions - 1)
+
+    def test_deleteinvalid__question(self):
+        res = self.client().delete('/questions/1000')
+        data = json.loads(res.data)
+        self.assertEqual(data['error'], 404)
 
     def test_search_question(self):
         res = self.client().post('/questions', json={'searchTerm': 'title'})
@@ -131,6 +152,9 @@ class TriviaTestCase(unittest.TestCase):
         self.assertIsNone(data.get('previous_questions'))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
+
+
+
 
 
 # Make the tests conveniently executable
