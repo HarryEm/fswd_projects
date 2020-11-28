@@ -66,28 +66,69 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
 
-    # def test_create_new_question(self):
-    #     res = self.client().post('/questions', json=self.new_question)
-    #     data = json.loads(res.data)
-    #
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
-    #
-    # def test_delete_questions(self):
-    #     question_id = Question.query.all()[-1].id
-    #     total_questions = len(Question.query.all())
-    #     res = self.client().delete(f'/questions/{question_id}')
-    #     data = json.loads(res.data)
-    #
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
-    #     self.assertEqual(data['deleted'], question_id)
-    #     self.assertIsNotNone(len(Question.query.all()), total_questions - 1)
+    def test_create_new_question(self):
+        res = self.client().post('/questions', json=self.new_question)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+
+    def test_delete_questions(self):
+        question_id = Question.query.all()[-1].id
+        total_questions = len(Question.query.all())
+        res = self.client().delete(f'/questions/{question_id}')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['deleted'], question_id)
+        self.assertIsNotNone(len(Question.query.all()), total_questions - 1)
 
     def test_search_question(self):
-        res = self.client().post('/questions', json={'searchTerm': 'organ'})
+        res = self.client().post('/questions', json={'searchTerm': 'title'})
         data = json.loads(res.data)
-        
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['total_questions'], 2)
+
+        res2 = self.client().post('/questions', json={'searchTerm': 'N0NSENS'})
+        data2 = json.loads(res2.data)
+
+        self.assertEqual(res2.status_code, 200)
+        self.assertEqual(data2['success'], True)
+        self.assertEqual(data2['total_questions'], 0)
+
+    def test_get_category_questions(self):
+        category_id = 1
+
+        res = self.client().get(f'/categories/{category_id}/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertIsNotNone(data['total_questions'])
+        self.assertNotEqual(len(data['questions']), 0)
+        self.assertLessEqual(len(data['questions']), QUESTIONS_PER_PAGE)
+        self.assertEqual(data['current_category'], 'art')
+
+    def test_play_quiz(self):
+        category = Category.query.filter(Category.id == 1).one_or_none()
+        res = self.client().post('/quizzes', json={
+                'quiz_category': category.format()})
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+
+        # Test when all the questions in this category have been asked
+        formatted_questions = [q.id for q in Question.query
+                               .filter(Question.category == category.id)
+                               .all()]
+        res = self.client().post('/quizzes', json={
+                        'quiz_category': category.format(),
+                        'previous_questions': formatted_questions})
+        data = json.loads(res.data)
+        self.assertIsNone(data.get('previous_questions'))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
 
