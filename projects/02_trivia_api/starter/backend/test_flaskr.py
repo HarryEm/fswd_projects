@@ -100,7 +100,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['deleted'], question_id)
         self.assertIsNotNone(len(Question.query.all()), total_questions - 1)
 
-    def test_deleteinvalid__question(self):
+    def test_delete_invalid_question(self):
         res = self.client().delete('/questions/1000')
         data = json.loads(res.data)
         self.assertEqual(data['error'], 404)
