@@ -9,19 +9,18 @@ AUTH0_DOMAIN = 'udacity-fsnd.auth0.com'
 ALGORITHMS = ['RS256']
 API_AUDIENCE = 'dev'
 
-## AuthError Exception
-'''
-AuthError Exception
-A standardized way to communicate auth failure modes
-'''
+
 class AuthError(Exception):
+    '''
+    AuthError Exception
+    A standardized way to communicate auth failure modes
+    '''
     def __init__(self, error, status_code):
         self.error = error
         self.status_code = status_code
 
 
-## Auth Header
-
+# Auth Header
 '''
 @TODO implement get_token_auth_header() method
     it should attempt to get the header from the request
@@ -31,7 +30,20 @@ class AuthError(Exception):
     return the token part of the header
 '''
 def get_token_auth_header():
-   raise Exception('Not Implemented')
+    if 'headers' not in request:
+        raise AuthError("No header in request", 401)
+    if 'Authorisation' not in request.headers:
+        raise AuthError("Auth not in header", 401)
+
+    auth_header = request.header['Authorisation']
+    header_parts = auth_header.split(' ')
+
+    if len(header_parts) != 2:
+        raise AuthError("Header Malformed", 401)
+    elif header_parts[0].lower() != 'bearer':
+        raise AuthError("Header Malformed", 401)
+    else:
+        return header_parts[1]
 
 '''
 @TODO implement check_permissions(permission, payload) method
