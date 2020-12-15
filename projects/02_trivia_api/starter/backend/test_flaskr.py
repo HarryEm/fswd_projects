@@ -89,6 +89,13 @@ class TriviaTestCase(unittest.TestCase):
         self.assertIsNone(data.get('previous_questions'))
         self.assertEqual(res.status_code, 422)
 
+        res = self.client().post('/questions', json={'question': 'question',
+                                                     'answer': 'Oh',
+                                                     'category': '2',
+                                                     'difficulty': 0})
+        self.assertIsNone(data.get('previous_questions'))
+        self.assertEqual(res.status_code, 422)
+
     def test_delete_questions(self):
         question_id = Question.query.all()[-1].id
         total_questions = len(Question.query.all())
@@ -131,7 +138,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertIsNotNone(data['total_questions'])
         self.assertNotEqual(len(data['questions']), 0)
         self.assertLessEqual(len(data['questions']), QUESTIONS_PER_PAGE)
-        self.assertEqual(data['current_category'], 'art')
+        self.assertEqual(data['current_category'], 'science')
 
     def test_play_quiz(self):
         category = Category.query.filter(Category.id == 1).one_or_none()
@@ -152,9 +159,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertIsNone(data.get('previous_questions'))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-
-
-
 
 
 # Make the tests conveniently executable

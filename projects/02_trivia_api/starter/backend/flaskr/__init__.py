@@ -56,14 +56,15 @@ def create_app(test_config=None):
 
   TEST: At this point, when you start the application
   you should see questions and categories generated,
-  ten questions per page and pagination at the bottom of the screen for three pages.
+  ten questions per page and pagination at the bottom of the screen for three
+  pages.
   Clicking on the page numbers should update the questions.
   '''
   def get_paginated_questions(request, questions, total_questions):
     '''
     Return questions in batches according to a batch size of num_of_questions
     '''
-    num_of_questions=QUESTIONS_PER_PAGE
+    num_of_questions = QUESTIONS_PER_PAGE
     page = request.args.get('page', 1, type=int)
 
     start = (page - 1) * num_of_questions
@@ -170,7 +171,7 @@ def create_app(test_config=None):
               # Check not None or empty and are strings
               if (all(args) and all(type(arg) == str
                   for arg in [question_text, answer, category])
-                  and (type(difficulty) == int)):
+                  and difficulty in [1, 2, 3, 4]):
                   question = Question(question=question_text,
                                       answer=answer,
                                       category=category,
@@ -212,7 +213,7 @@ def create_app(test_config=None):
   def get_category_questions(category_id):
       try:
           # category_id is 0 indexed in the front end, 1 indexed in the table
-          current_category = category_id + 1
+          current_category = category_id# + 1
 
           category = Category.query\
                 .filter(Category.id == current_category)\
