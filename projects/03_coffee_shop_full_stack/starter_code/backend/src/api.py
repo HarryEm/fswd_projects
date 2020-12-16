@@ -96,13 +96,32 @@ def add_drink(payload):
         it should update the corresponding row for <id>
         it should require the 'patch:drinks' permission
         it should contain the drink.long() data representation
-    returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
+    returns status code 200 and json {"success": True, "drinks": drink} where
+    drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
 @app.route('/drinks/<int:id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
-def edit_drink(id):
-    pass
+def edit_drink(payload, id):
+    drink = Drink.query.filter(Drink.id == id).one_or_none()
+
+    # Check drink exists
+    if not drink:
+        abort(404)
+
+    body = request.get_json()
+    drink.title = body.get('title', drink.title)
+    drink.recipe = body.get('recipe', drink.recipe)
+
+    drink.update()
+
+    return jsonify({
+                "success": True,
+                'status_code': 200,
+                "drinks": [drink.long()]
+            }), 200
+
+
 
 '''
 @TODO implement endpoint
@@ -111,13 +130,28 @@ def edit_drink(id):
         it should respond with a 404 error if <id> is not found
         it should delete the corresponding row for <id>
         it should require the 'delete:drinks' permission
-    returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
+    returns status code 200 and json {"success": True, "delete": id} where id
+    is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
 @app.route('/drinks/<int:id>', methods=['DELETE'])
 @requires_auth('delete:drinks')
-def delete_drink(id):
-    pass
+def delete_drink(payload, id):
+    drink = Drink.query.filter(Drink.id == id).one_or_none()
+
+    # Check drink exists
+    if not drink:
+        abort(404)
+
+    id = drink.id
+
+    drink.delete()
+
+    return jsonify({
+                "success": True,
+                'status_code': 200,
+                "delete": id
+            }), 200
 
 ## Error Handling
 '''
