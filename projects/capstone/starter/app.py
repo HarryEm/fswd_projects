@@ -34,21 +34,75 @@ def create_app(test_config=None):
               "movies": movies
             }), 200
 
-  @app.route('/actors/<int:actor_id>', methods=['POST'])
-  def create_actor(actor_id):
+  @app.route('/actors', methods=['POST'])
+  def create_actor():
     body = request.get_json()
+    name = body.get('name')
+    age = body.get('age')
+    gender = body.get('gender')
 
-  @app.route('/movies/<int:movie_id>', methods=['POST'])
-  def create_movie(movie_id):
+    actor = Actor(name=name, age=age, gender=gender)
+
+    actor.insert()
+
+    return jsonify({
+                "success": True,
+                'status_code': 200
+            }), 200
+
+  @app.route('/movies', methods=['POST'])
+  def create_movie():
     body = request.get_json()
+    title = body.get('title')
+    release_date = body.get('release_date')
 
-  @app.route('/actors/<int:actor_id>', methods=['PATCH'])
-  def edit_actor(payload, actor_id):
-    pass
+    movie = Movie(title=title, release_date=release_date)
 
-  @app.route('/movies/<int:movie_id>', methods=['PATCH'])
-  def edit_movie(payload, movie_id):
-    pass
+    movie.insert()
+
+    return jsonify({
+                "success": True,
+                'status_code': 200
+            }), 200
+
+  @app.route('/actors/<int:id>', methods=['PATCH'])
+  def edit_actor(id):
+    actor = Actor.query.filter(Actor.id == id).one_or_none()
+
+    # Check actor exists
+    if not actor:
+        abort(404)
+
+    body = request.get_json()
+    actor.name = body.get('name', actor.name)
+    actor.age = body.get('age', actor.age)
+    actor.gender = body.get('gender', actor.gender)
+
+    actor.update()
+
+    return jsonify({
+                "success": True,
+                'status_code': 200
+            }), 200
+
+  @app.route('/movies/<int:id>', methods=['PATCH'])
+  def edit_movie(id):
+    movie = Movie.query.filter(Movie.id == id).one_or_none()
+
+    # Check actor exists
+    if not movie:
+        abort(404)
+
+    body = request.get_json()
+    movie.title = body.get('title', movie.title)
+    movie.release_date = body.get('release_date', movie.release_date)
+
+    movie.update()
+
+    return jsonify({
+                "success": True,
+                'status_code': 200
+            }), 200
 
   @app.route('/actors/<int:actor_id>', methods=['DELETE'])
   def delete_actor(actor_id):

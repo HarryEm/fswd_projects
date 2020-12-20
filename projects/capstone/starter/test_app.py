@@ -4,7 +4,7 @@ import json
 from flask_sqlalchemy import SQLAlchemy
 
 from app import create_app
-from models import setup_db, Movie, Actor
+from models import setup_db, db_drop_and_create_all, Movie, Actor
 
 
 class CastingAgencyTestCase(unittest.TestCase):
@@ -19,17 +19,14 @@ class CastingAgencyTestCase(unittest.TestCase):
                                                        self.database_name)
         setup_db(self.app, self.database_path)
 
+        db_drop_and_create_all()
+
         # binds the app to the current context
         with self.app.app_context():
             self.db = SQLAlchemy()
             self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
-
-        # self.new_question = Question(question='What?',
-        #                              answer='Oh',
-        #                              category='2',
-        #                              difficulty=4).format()
 
     def tearDown(self):
         """Executed after each test"""
@@ -54,20 +51,73 @@ class CastingAgencyTestCase(unittest.TestCase):
         self.assertEqual(len(data['movies']), 0)
 
     def test_create_new_actor(self):
-        test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male").format()
+        test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
+            .format()
         res = self.client().post('/actors', json=test_actor_1)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
 
-    def test_create_new_movie(self):
-        test_movie_1 = Movie(title="Night Club", release_date="1999-11-12").format()
-        res = self.client().post('/actors', json=test_movie_1)
+        res = self.client().get('/actors')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
+        self.assertIsNotNone(data['actors'])
+        self.assertEqual(len(data['actors']), 1)
+
+    def test_create_new_movie(self):
+        test_movie_1 = Movie(title="Night Club", release_date="1999-11-12")\
+            .format()
+        res = self.client().post('/movies', json=test_movie_1)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+
+        res = self.client().get('/movies')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertIsNotNone(data['movies'])
+        self.assertEqual(len(data['movies']), 1)
+
+    def test_edit_actor(self):
+        test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
+            .format()
+        res = self.client().post('/actors', json=test_actor_1)
+
+        id = test_actor_1.get("id")
+
+        res2 = self.client().patch('/actors/1', json={"name": "Brad Pitt"})
+
+        self.assertEqual(res2.status_code, 200)
+
+        res3 = self.client().get('/actors')
+        data = json.loads(res3.data)
+        self.assertEqual(data['success'], True)
+        self.assertIsNotNone(data['actors'])
+        self.assertEqual(len(data['actors']), 1)
+
+    def test_edit_movie(self):
+        test_movie_1 = Movie(title="Night Club", release_date="1999-11-12")\
+            .format()
+        res = self.client().post('/movies', json=test_movie_1)
+
+        id = test_movie_1.get("id")
+
+        res2 = self.client().patch('/movies/1', json={"title": "Fight Club"})
+
+        self.assertEqual(res2.status_code, 200)
+
+        res3 = self.client().get('/movies')
+        data = json.loads(res3.data)
+        self.assertEqual(data['success'], True)
+        self.assertIsNotNone(data['movies'])
+        self.assertEqual(len(data['movies']), 1)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
