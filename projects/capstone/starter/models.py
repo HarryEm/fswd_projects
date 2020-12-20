@@ -1,12 +1,14 @@
 import os
 from sqlalchemy import Column, Integer, String, Date
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 # import json
 
 database_name = "movie_casting"
 database_path = "postgres://{}/{}".format('localhost:5432', database_name)
 
 db = SQLAlchemy()
+migrate = Migrate()
 
 
 def setup_db(app, database_path=database_path):
@@ -18,6 +20,7 @@ def setup_db(app, database_path=database_path):
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
     db.init_app(app)
+    migrate.init_app(app, db)
     db.create_all()
 
 

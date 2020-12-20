@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
 from models import setup_db, Movie, Actor
+from auth import AuthError, requires_auth
 
 
 def create_app(test_config=None):
@@ -12,13 +13,30 @@ def create_app(test_config=None):
   setup_db(app)
   CORS(app)
 
+  '''
+  Use the after_request decorator to set Access-Control-Allow
+  '''
+  @app.after_request
+  def after_request(response):
+      response.headers.add('Access-Control-Allow-Headers',
+                           'Content-Type,Authorization,true')
+      response.headers.add('Access-Control-Allow-Methods',
+                           'GET,PATCH,POST,DELETE,OPTIONS')
+
+      return response
+
   @app.route('/')
   def hello_world():
       return 'Hello, World from Flask!\n'
 
   @app.route('/actors', methods=['GET'])
-  def get_actors():
+  @requires_auth(permission='get:actors')
+  def get_actors(payload):
     actors = [actor.format() for actor in Actor.query.all()]
+
+    if len(actors) == 0:
+        abort(404)
+
     return jsonify({
               "success": True,
               'status_code': 200,
@@ -26,8 +44,13 @@ def create_app(test_config=None):
             }), 200
 
   @app.route('/movies', methods=['GET'])
-  def get_movies():
+  @requires_auth(permission='get:movies')
+  def get_movies(payload):
     movies = [movie.format() for movie in Movie.query.all()]
+
+    if len(movies) == 0:
+        abort(404)
+
     return jsonify({
               "success": True,
               'status_code': 200,
@@ -35,7 +58,8 @@ def create_app(test_config=None):
             }), 200
 
   @app.route('/actors', methods=['POST'])
-  def create_actor():
+  @requires_auth(permission='post:actors')
+  def create_actor(payload):
     body = request.get_json()
     name = body.get('name')
     age = body.get('age')
@@ -51,7 +75,8 @@ def create_app(test_config=None):
             }), 200
 
   @app.route('/movies', methods=['POST'])
-  def create_movie():
+  @requires_auth(permission='post:movies')
+  def create_movie(payload):
     body = request.get_json()
     title = body.get('title')
     release_date = body.get('release_date')
@@ -66,7 +91,8 @@ def create_app(test_config=None):
             }), 200
 
   @app.route('/actors/<int:id>', methods=['PATCH'])
-  def edit_actor(id):
+  @requires_auth(permission='patch:actors')
+  def edit_actor(payload, id):
     actor = Actor.query.filter(Actor.id == id).one_or_none()
 
     # Check actor exists
@@ -87,7 +113,8 @@ def create_app(test_config=None):
             }), 200
 
   @app.route('/movies/<int:id>', methods=['PATCH'])
-  def edit_movie(id):
+  @requires_auth(permission='patch:movies')
+  def edit_movie(payload, id):
     movie = Movie.query.filter(Movie.id == id).one_or_none()
 
     # Check actor exists
@@ -107,7 +134,8 @@ def create_app(test_config=None):
             }), 200
 
   @app.route('/actors/<int:id>', methods=['DELETE'])
-  def delete_actor(id):
+  @requires_auth(permission='delete:actors')
+  def delete_actor(payload, id):
     actor = Actor.query.filter(Actor.id == id).one_or_none()
 
     # Check drink exists
@@ -125,7 +153,8 @@ def create_app(test_config=None):
             }), 200
 
   @app.route('/movies/<int:id>', methods=['DELETE'])
-  def delete_movie(id):
+  @requires_auth(permission='delete:movies')
+  def delete_movie(payload, id):
     movie = Movie.query.filter(Movie.id == id).one_or_none()
 
     # Check drink exists
@@ -173,6 +202,14 @@ def create_app(test_config=None):
           "error": 500,
           "message": "Internal Server Error"
       }), 500
+
+  @app.errorhandler(AuthError)
+  def unprocessable(error):
+      return jsonify({
+                      "success": False,
+                      "error": "AuthError",
+                      "message": "Authorization error"
+                  }), AuthError
 
   return app
 
