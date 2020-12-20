@@ -30,3 +30,12 @@ Once you have your virtual environment setup and running, install dependencies b
 ```bash
 pip install -r requirements.txt
 ```
+
+## Testing
+To run the tests, from within postgres run
+```
+dropdb movie_casting_test
+createdb movie_casting_test
+<!-- psql trivia_test < trivia.psql -->
+python test_app.py
+```

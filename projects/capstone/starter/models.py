@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import Column, String, Date
+from sqlalchemy import Column, Integer, String, Date
 from flask_sqlalchemy import SQLAlchemy
 # import json
 
@@ -21,9 +21,9 @@ def setup_db(app, database_path=database_path):
     db.create_all()
 
 
-class Movies(db.Model):
+class Movie(db.Model):
   '''
-  Movies
+  Movie
   '''
   __tablename__ = 'movies'
 
@@ -61,7 +61,7 @@ class Movies(db.Model):
 
 class Actor(db.Model):
   '''
-  Actors
+  Actor
   '''
   __tablename__ = 'actors'
 
