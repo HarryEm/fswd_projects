@@ -161,6 +161,42 @@ class CastingAgencyTestCase(unittest.TestCase):
         self.assertIsNotNone(data4['movies'])
         self.assertEqual(len(data4['movies']), 0)
 
+    def test_edit_invalid_actor(self):
+        test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
+            .format()
+        res = self.client().post('/actors', json=test_actor_1)
+        self.assertEqual(res.status_code, 200)
+
+        res2 = self.client().patch('/actors/99999', json={"name": "Brad Pitt"})
+        self.assertEqual(res2.status_code, 404)
+
+    def test_delete_invalid_actor(self):
+        test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
+            .format()
+        res = self.client().post('/actors', json=test_actor_1)
+        self.assertEqual(res.status_code, 200)
+
+        res2 = self.client().delete('/actors/99999')
+        self.assertEqual(res2.status_code, 404)
+
+    def test_edit_invalid_movie(self):
+        test_movie_1 = Movie(title="Night Club", release_date="1999-11-12")\
+            .format()
+        res = self.client().post('/movies', json=test_movie_1)
+        self.assertEqual(res.status_code, 200)
+
+        res2 = self.client().patch('/movies/99999', json={"name": "Brad Pitt"})
+        self.assertEqual(res2.status_code, 404)
+
+    def test_delete_invalid_movie(self):
+        test_movie_1 = Movie(title="Night Club", release_date="1999-11-12")\
+            .format()
+        res = self.client().post('/movies', json=test_movie_1)
+        self.assertEqual(res.status_code, 200)
+
+        res2 = self.client().delete('/movies/99999')
+        self.assertEqual(res2.status_code, 404)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
