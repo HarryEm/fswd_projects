@@ -3,10 +3,13 @@ from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
+from models import setup_db
+
 
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
+  setup_db(app)
   CORS(app)
 
   return app
@@ -58,7 +61,6 @@ def edit_actor(payload, actor_id):
 @app.route('/movies/<int:movie_id>', methods=['PATCH'])
 def edit_movie(payload, movie_id):
   pass
-
 
 
 if __name__ == '__main__':
