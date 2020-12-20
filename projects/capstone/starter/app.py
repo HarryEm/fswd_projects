@@ -18,15 +18,21 @@ def create_app(test_config=None):
 
   @app.route('/actors', methods=['GET'])
   def get_actors():
+    actors = [actor.format() for actor in Actor.query.all()]
     return jsonify({
               "success": True,
               'status_code': 200,
-              # "drinks": drinks
+              "actors": actors
             }), 200
 
   @app.route('/movies', methods=['GET'])
   def get_movies():
-    pass
+    movies = [movie.format() for movie in Movie.query.all()]
+    return jsonify({
+              "success": True,
+              'status_code': 200,
+              "movies": movies
+            }), 200
 
   @app.route('/actors/<int:actor_id>', methods=['POST'])
   def create_actor(actor_id):
@@ -36,20 +42,20 @@ def create_app(test_config=None):
   def create_movie(movie_id):
     body = request.get_json()
 
-  @app.route('/actors/<int:actor_id>', methods=['DELETE'])
-  def delete_actor(actor_id):
-    pass
-
-  @app.route('/movies/<int:movie_id>', methods=['DELETE'])
-  def delete_movie(movie_id):
-    pass
-
   @app.route('/actors/<int:actor_id>', methods=['PATCH'])
   def edit_actor(payload, actor_id):
     pass
 
   @app.route('/movies/<int:movie_id>', methods=['PATCH'])
   def edit_movie(payload, movie_id):
+    pass
+
+  @app.route('/actors/<int:actor_id>', methods=['DELETE'])
+  def delete_actor(actor_id):
+    pass
+
+  @app.route('/movies/<int:movie_id>', methods=['DELETE'])
+  def delete_movie(movie_id):
     pass
 
   return app

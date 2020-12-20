@@ -41,9 +41,33 @@ class CastingAgencyTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        # self.assertIsNotNone(data['total_questions'])
-        # self.assertNotEqual(len(data['questions']), 0)
+        self.assertIsNotNone(data['actors'])
+        self.assertEqual(len(data['actors']), 0)
 
+    def test_get_movies(self):
+        res = self.client().get('/movies')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertIsNotNone(data['movies'])
+        self.assertEqual(len(data['movies']), 0)
+
+    def test_create_new_actor(self):
+        test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male").format()
+        res = self.client().post('/actors', json=test_actor_1)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+
+    def test_create_new_movie(self):
+        test_movie_1 = Movie(title="Night Club", release_date="1999-11-12").format()
+        res = self.client().post('/actors', json=test_movie_1)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
