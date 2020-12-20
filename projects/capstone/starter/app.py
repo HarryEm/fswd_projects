@@ -82,7 +82,8 @@ def create_app(test_config=None):
 
     return jsonify({
                 "success": True,
-                'status_code': 200
+                'status_code': 200,
+                "actor": actor.format()
             }), 200
 
   @app.route('/movies/<int:id>', methods=['PATCH'])
@@ -101,16 +102,45 @@ def create_app(test_config=None):
 
     return jsonify({
                 "success": True,
-                'status_code': 200
+                'status_code': 200,
+                "movie": movie.format()
             }), 200
 
-  @app.route('/actors/<int:actor_id>', methods=['DELETE'])
-  def delete_actor(actor_id):
-    pass
+  @app.route('/actors/<int:id>', methods=['DELETE'])
+  def delete_actor(id):
+    actor = Actor.query.filter(Actor.id == id).one_or_none()
 
-  @app.route('/movies/<int:movie_id>', methods=['DELETE'])
-  def delete_movie(movie_id):
-    pass
+    # Check drink exists
+    if not actor:
+        abort(404)
+
+    id = actor.id
+
+    actor.delete()
+
+    return jsonify({
+                "success": True,
+                'status_code': 200,
+                "delete": id
+            }), 200
+
+  @app.route('/movies/<int:id>', methods=['DELETE'])
+  def delete_movie(id):
+    movie = Movie.query.filter(Movie.id == id).one_or_none()
+
+    # Check drink exists
+    if not movie:
+        abort(404)
+
+    id = movie.id
+
+    movie.delete()
+
+    return jsonify({
+                "success": True,
+                'status_code': 200,
+                "delete": id
+            }), 200
 
   return app
 

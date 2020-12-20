@@ -89,11 +89,10 @@ class CastingAgencyTestCase(unittest.TestCase):
             .format()
         res = self.client().post('/actors', json=test_actor_1)
 
-        id = test_actor_1.get("id")
-
         res2 = self.client().patch('/actors/1', json={"name": "Brad Pitt"})
-
+        data2 = json.loads(res2.data)
         self.assertEqual(res2.status_code, 200)
+        self.assertEqual(data2['actor']['name'], "Brad Pitt")
 
         res3 = self.client().get('/actors')
         data = json.loads(res3.data)
@@ -106,17 +105,61 @@ class CastingAgencyTestCase(unittest.TestCase):
             .format()
         res = self.client().post('/movies', json=test_movie_1)
 
-        id = test_movie_1.get("id")
-
         res2 = self.client().patch('/movies/1', json={"title": "Fight Club"})
 
+        data2 = json.loads(res2.data)
         self.assertEqual(res2.status_code, 200)
+        self.assertEqual(data2['movie']['title'], "Fight Club")
 
         res3 = self.client().get('/movies')
-        data = json.loads(res3.data)
-        self.assertEqual(data['success'], True)
-        self.assertIsNotNone(data['movies'])
-        self.assertEqual(len(data['movies']), 1)
+        data3 = json.loads(res3.data)
+        self.assertEqual(data3['success'], True)
+        self.assertIsNotNone(data3['movies'])
+        self.assertEqual(len(data3['movies']), 1)
+
+    def test_delete_actor(self):
+        test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
+            .format()
+        res = self.client().post('/actors', json=test_actor_1)
+
+        res2 = self.client().get('/actors')
+        data2 = json.loads(res2.data)
+        self.assertEqual(data2['success'], True)
+        self.assertIsNotNone(data2['actors'])
+        self.assertEqual(len(data2['actors']), 1)
+
+        res3 = self.client().delete('/actors/1')
+        data3 = json.loads(res3.data)
+        self.assertEqual(data3['success'], True)
+        self.assertEqual(data3['delete'], 1)
+
+        res4 = self.client().get('/actors')
+        data4 = json.loads(res4.data)
+        self.assertEqual(data4['success'], True)
+        self.assertIsNotNone(data4['actors'])
+        self.assertEqual(len(data4['actors']), 0)
+
+    def test_delete_movie(self):
+        test_movie_1 = Movie(title="Night Club", release_date="1999-11-12")\
+            .format()
+        res = self.client().post('/movies', json=test_movie_1)
+
+        res2 = self.client().get('/movies')
+        data2 = json.loads(res2.data)
+        self.assertEqual(data2['success'], True)
+        self.assertIsNotNone(data2['movies'])
+        self.assertEqual(len(data2['movies']), 1)
+
+        res3 = self.client().delete('/movies/1')
+        data3 = json.loads(res3.data)
+        self.assertEqual(data3['success'], True)
+        self.assertEqual(data3['delete'], 1)
+
+        res4 = self.client().get('/movies')
+        data4 = json.loads(res4.data)
+        self.assertEqual(data4['success'], True)
+        self.assertIsNotNone(data4['movies'])
+        self.assertEqual(len(data4['movies']), 0)
 
 
 # Make the tests conveniently executable
