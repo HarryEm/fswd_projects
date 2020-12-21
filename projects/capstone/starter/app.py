@@ -1,15 +1,32 @@
-import os
-from flask import Flask, request, abort, jsonify
+from os import environ as env
+
+from dotenv import load_dotenv, find_dotenv
+from flask import Flask, request, abort, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from authlib.integrations.flask_client import OAuth
 
 from models import setup_db, Movie, Actor
 from auth import AuthError, requires_auth
+import constants
+# breakpoint()
+ENV_FILE = find_dotenv()
+if ENV_FILE:
+    load_dotenv(ENV_FILE)
+
+AUTH0_CALLBACK_URL = constants.AUTH0_CALLBACK_URL
+AUTH0_CLIENT_ID = env.get('AUTH0_CLIENT_ID')
+AUTH0_CLIENT_SECRET = env.get('AUTH0_CLIENT_SECRET')
+AUTH0_DOMAIN = env.get('AUTH0_DOMAIN')
+AUTH0_BASE_URL = 'https://' + AUTH0_DOMAIN
+AUTH0_AUDIENCE = env.get('AUTH0_AUDIENCE')
 
 
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
+  app.secret_key = constants.SECRET_KEY
+
   setup_db(app)
   CORS(app)
 
@@ -24,6 +41,52 @@ def create_app(test_config=None):
                            'GET,PATCH,POST,DELETE,OPTIONS')
 
       return response
+
+  # OAuth setup and endpoints
+  oauth = OAuth(app)
+
+  auth0 = oauth.register(
+      'auth0',
+      client_id=AUTH0_CLIENT_ID,
+      client_secret=AUTH0_CLIENT_SECRET,
+      api_base_url=AUTH0_BASE_URL,
+      access_token_url=AUTH0_BASE_URL + '/oauth/token',
+      authorize_url=AUTH0_BASE_URL + '/authorize',
+      client_kwargs={
+          'scope': 'openid profile email',
+      },
+  )
+
+  @app.route('/callback')
+  def callback_handling():
+      auth = auth0.authorize_access_token()
+      user = auth0.get('userinfo')
+      userinfo = user.json()
+
+      # store jwt in session
+      session['token'] = auth['access_token']
+      # store username in session
+      session['user'] = userinfo['name']
+
+      # session[constants.JWT_PAYLOAD] = userinfo
+      # session[constants.PROFILE_KEY] = {
+      #     'user_id': userinfo['sub'],
+      #     'name': userinfo['name'],
+      #     'picture': userinfo['picture']
+      # }
+      return redirect('/')
+
+  @app.route('/login')
+  def login():
+    return auth0.authorize_redirect(redirect_uri=AUTH0_CALLBACK_URL,
+                                    audience=AUTH0_AUDIENCE)
+
+  @app.route('/logout')
+  def logout():
+    session.clear()
+    params = {'returnTo':
+              url_for('home', _external=True), 'client_id': AUTH0_CLIENT_ID}
+    return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
 
   @app.route('/')
   def hello_world():
@@ -217,4 +280,4 @@ def create_app(test_config=None):
 APP = create_app()
 
 if __name__ == '__main__':
-    APP.run(host='0.0.0.0', port=8080, debug=True)
+    APP.run(host='0.0.0.0', port=8080, debug=False)
