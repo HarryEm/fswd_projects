@@ -18,6 +18,7 @@ if ENV_FILE:
     load_dotenv(ENV_FILE)
 
 AUTH0_CALLBACK_URL = constants.AUTH0_CALLBACK_URL
+# AUTH0_CALLBACK_URL = 'https://127.0.0.1:5000/callback'
 AUTH0_CLIENT_ID = env.get('AUTH0_CLIENT_ID')
 AUTH0_CLIENT_SECRET = env.get('AUTH0_CLIENT_SECRET')
 AUTH0_DOMAIN = env.get('AUTH0_DOMAIN')
@@ -71,6 +72,7 @@ def create_app(test_config=None):
 
   @app.route('/callback')
   def callback_handling():
+    try:
       auth = auth0.authorize_access_token()
       user = auth0.get('userinfo')
       userinfo = user.json()
@@ -80,35 +82,42 @@ def create_app(test_config=None):
       # store username in session
       session['user'] = userinfo['name']
 
-      # session[constants.JWT_PAYLOAD] = userinfo
-      # session[constants.PROFILE_KEY] = {
-      #     'user_id': userinfo['sub'],
-      #     'name': userinfo['name'],
-      #     'picture': userinfo['picture']
-      # }
+      session[constants.JWT_PAYLOAD] = userinfo
+      session[constants.PROFILE_KEY] = {
+          'user_id': userinfo['sub'],
+          'name': userinfo['name'],
+          'picture': userinfo['picture']
+      }
       return redirect('/dashboard')
+    except Exception as e:
+      print('Error on callback:', e)
 
   @app.route('/login')
   def login():
-    return auth0.authorize_redirect(redirect_uri=AUTH0_CALLBACK_URL,
-                                    audience=AUTH0_AUDIENCE)
+    try:
+      return auth0.authorize_redirect(redirect_uri=AUTH0_CALLBACK_URL,
+                                      audience=AUTH0_AUDIENCE)
+    except Exception as e:
+      print('Error on login:', e)
 
   @app.route('/logout')
   def logout():
     session.clear()
     params = {'returnTo':
               url_for('home', _external=True), 'client_id': AUTH0_CLIENT_ID}
-    return redirect(auth0.api_base_url + '/logout?' + urlencode(params))
+    return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
 
-  @app.route('/dashboard')
   @requires_login
+  @app.route('/dashboard')
   def dashboard():
     return render_template('dashboard.html',
                            token=session.get('token'),
+                           user=session.get('user')
                            )
 
   @app.route('/')
   def home():
+      # return "hello"
       return render_template('home.html')
 
   @app.route('/actors', methods=['GET'])

@@ -92,19 +92,19 @@ class CastingAgencyTestCase(unittest.TestCase):
             .format()
         res = self.client().post('/movies', json=test_movie_1,
                                  headers={'Authorization': token_producer1})
+        self.assertEqual(res.status_code, 200)
         data = json.loads(res.data)
 
-        self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
 
-        res = self.client().get('/movies',
+        res2 = self.client().get('/movies',
                                 headers={'Authorization': token_producer1})
-        data = json.loads(res.data)
+        self.assertEqual(res2.status_code, 200)
+        data2 = json.loads(res2.data)
 
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(data['success'], True)
-        self.assertIsNotNone(data['movies'])
-        self.assertEqual(len(data['movies']), 1)
+        self.assertEqual(data2['success'], True)
+        self.assertIsNotNone(data2['movies'])
+        self.assertEqual(len(data2['movies']), 1)
 
     def test_edit_actor(self):
         test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
@@ -176,9 +176,11 @@ class CastingAgencyTestCase(unittest.TestCase):
             .format()
         res = self.client().post('/movies', json=test_movie_1,
                                  headers={'Authorization': token_producer1})
+        self.assertEqual(res.status_code, 200)
 
         res2 = self.client().get('/movies',
                                  headers={'Authorization': token_producer1})
+        self.assertEqual(res2.status_code, 200)
         data2 = json.loads(res2.data)
         self.assertEqual(data2['success'], True)
         self.assertIsNotNone(data2['movies'])
@@ -186,6 +188,7 @@ class CastingAgencyTestCase(unittest.TestCase):
 
         res3 = self.client().delete('/movies/1',
                                     headers={'Authorization': token_producer1})
+        self.assertEqual(res3.status_code, 200)
         data3 = json.loads(res3.data)
         self.assertEqual(data3['success'], True)
         self.assertEqual(data3['delete'], 1)
