@@ -1,4 +1,5 @@
 from os import environ as env
+import json
 from functools import wraps
 
 from dotenv import load_dotenv, find_dotenv
@@ -18,7 +19,7 @@ if ENV_FILE:
     load_dotenv(ENV_FILE)
 
 AUTH0_CALLBACK_URL = constants.AUTH0_CALLBACK_URL
-# AUTH0_CALLBACK_URL = 'https://127.0.0.1:5000/callback'
+AUTH0_CALLBACK_URL = 'https://127.0.0.1:5000/callback'
 AUTH0_CLIENT_ID = env.get('AUTH0_CLIENT_ID')
 AUTH0_CLIENT_SECRET = env.get('AUTH0_CLIENT_SECRET')
 AUTH0_DOMAIN = env.get('AUTH0_DOMAIN')
