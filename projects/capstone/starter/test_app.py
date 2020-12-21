@@ -6,11 +6,11 @@ from flask_sqlalchemy import SQLAlchemy
 from app import create_app
 from models import setup_db, db_drop_and_create_all, Movie, Actor
 
-token_assistant1  = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjR1dkhfMVdMTEtoZkdkZVF1eWtobiJ9.eyJpc3MiOiJodHRwczovL2NvZmZlZWFwcGgudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDVmZGZjYzNjNDUyMjY4MDA3NTU5ZGU2MCIsImF1ZCI6Im1vdmllLWNhc3RpbmctYWdlbmN5IiwiaWF0IjoxNjA4NTAyMzgwLCJleHAiOjE2MDg1MDk1ODAsImF6cCI6IkhmYUxwOTNPcDkwT3NRTzZhUUNHZ2dBUktsODZJUmlTIiwic2NvcGUiOiIiLCJwZXJtaXNzaW9ucyI6WyJnZXQ6YWN0b3JzIiwiZ2V0Om1vdmllcyJdfQ.olgk4o-wPqu-wql0jzLmFiQwm93MXK_yundHQBxzUFCZiyxM4ftouVwLD5OMHwpqZ9ysHG5MocLHs7zZKjySr0WqQ12p3jIZ3izjdgI2vmJ6l5CzcQFp3fM3AszSmhTfmaVpG0xsERwwsRCXFro1Wh8_XaDcc6ASfQ5aVs6uSxeZffvVFw3aSbzvOzdHj71Bbuj3OYxEcBx7D737xX1szTFRLFYizwjD_Y5A-k2j5UnL4sLjf5tH11pGbreAdnmu1xSBplq0mL26t_F6elAys_DxDF9Xyl7ymgJAHb4mpVMyDJyy-wi9gO5weFm40LJ-oaBl5_lky4gGHNHqo23p8w'
+token_assistant1 = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjR1dkhfMVdMTEtoZkdkZVF1eWtobiJ9.eyJpc3MiOiJodHRwczovL2NvZmZlZWFwcGgudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDVmZGZjYzNjNDUyMjY4MDA3NTU5ZGU2MCIsImF1ZCI6Im1vdmllLWNhc3RpbmctYWdlbmN5IiwiaWF0IjoxNjA4NTcwMDIwLCJleHAiOjE2MDg1NzcyMjAsImF6cCI6IkhmYUxwOTNPcDkwT3NRTzZhUUNHZ2dBUktsODZJUmlTIiwic2NvcGUiOiIiLCJwZXJtaXNzaW9ucyI6WyJnZXQ6YWN0b3JzIiwiZ2V0Om1vdmllcyJdfQ.nCrUoAr7ar0456LCdZU82uRnj9L9w3ZNIhjHKShi23j-c0hQU-PL2vuSk_cqArpUdvvhs1JsQOumd0aYRMyaO1X31xiC6ZE9HJ-gQgFlw9UtwhrVUQqiRhn-uS7Wx7yExvg5wT5S9EeUnO7vtlQbbDMIov3OjLODzyPVZTSist_eXDTsTRQFsdWkSMYF-blmlp71IRRWMAqq43nsIb1ThlB7lVF-USACQRZ7Ii3bRY9c-O_6IMT9SgvnBkxOfQrVTd7q3ezzZz5leCo8KAe_5r198JDvV7_Fgn10KFNllmZeVGLV_wlwK2uWq6LB8tVKQexVelG3HKCGsiu3hW0bIA'
 
-token_director1 = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjR1dkhfMVdMTEtoZkdkZVF1eWtobiJ9.eyJpc3MiOiJodHRwczovL2NvZmZlZWFwcGgudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDVmZGZjZTEyZTAwYTgzMDA2ZTg5MDEzZSIsImF1ZCI6Im1vdmllLWNhc3RpbmctYWdlbmN5IiwiaWF0IjoxNjA4NTAzOTU4LCJleHAiOjE2MDg1MTExNTgsImF6cCI6IkhmYUxwOTNPcDkwT3NRTzZhUUNHZ2dBUktsODZJUmlTIiwic2NvcGUiOiIiLCJwZXJtaXNzaW9ucyI6WyJkZWxldGU6YWN0b3JzIiwiZ2V0OmFjdG9ycyIsImdldDptb3ZpZXMiLCJwYXRjaDphY3RvcnMiLCJwYXRjaDptb3ZpZXMiLCJwb3N0OmFjdG9ycyJdfQ.NZEipC0fmwdnk2rS6EuYhPc6xpUG7xHRdVQRc5bZlKyO-dwR8AjimQ6l-jqbFsFNOZfAecS8mSeOrGXvegLx7a3rxx05KLdCRO87H9C6e5h2P4pJYVAswmvd3HCBHxoJ5if3PqoNaSpsCC79QbQ_URYOXvmstNBphwRHcAITsJMKZpIRKTv-idpD1tqD9SPzkpC-jGXGNLBtsbONkamJD5IRnc3mpHW77ZnktAPtgxHXBS1eg97jFYyQtNdj_V-KkytZDGIr0v6cR72_2cw0VNk0yDNQZWOs0gdixHf67TnV6vLrvO8v_-AaHqqrdn4LnPpmCgJCQ-C94KMjIEW-qw'
+token_director1 = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjR1dkhfMVdMTEtoZkdkZVF1eWtobiJ9.eyJpc3MiOiJodHRwczovL2NvZmZlZWFwcGgudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDVmZGZjZTEyZTAwYTgzMDA2ZTg5MDEzZSIsImF1ZCI6Im1vdmllLWNhc3RpbmctYWdlbmN5IiwiaWF0IjoxNjA4NTcwMjEzLCJleHAiOjE2MDg1Nzc0MTMsImF6cCI6IkhmYUxwOTNPcDkwT3NRTzZhUUNHZ2dBUktsODZJUmlTIiwic2NvcGUiOiIiLCJwZXJtaXNzaW9ucyI6WyJkZWxldGU6YWN0b3JzIiwiZ2V0OmFjdG9ycyIsImdldDptb3ZpZXMiLCJwYXRjaDphY3RvcnMiLCJwYXRjaDptb3ZpZXMiLCJwb3N0OmFjdG9ycyJdfQ.IVeXCCd_JW0cQ2LU2UoU4RMtCUEVcdiTOBU0g8CpoVQKw5qY1P2zl5O8l-zakxnXwRc6PyVhqXLP3FKFdX0shrb7MDxrEP36GqIBon-J6DnYz2mT8hczgsEL06gQV2p_dmGUFcrBsli3D0P6riycLHQ7r0fk9QB_GQ84lKozziNWoA_Ta-irqM3QVr3hmNMENNstUYcrEflSuyL_kkAaQIZy3DPqKe1MXM2Cr0RPb9pfx7MDeY75L8SIgA90XV9N7AsSLxnq061-w5oKTFy3GSsWAQEdbp5ZClIoDdCab6z0j4X0pzBkY6-ohRqjmqLDq8U-5ehjso35EzWGsqCvjw'
 
-token_producer1 = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjR1dkhfMVdMTEtoZkdkZVF1eWtobiJ9.eyJpc3MiOiJodHRwczovL2NvZmZlZWFwcGgudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDVmZGZkNDA2YmJjNGY5MDA2ZjFmNTcyMSIsImF1ZCI6Im1vdmllLWNhc3RpbmctYWdlbmN5IiwiaWF0IjoxNjA4NTA0NDc4LCJleHAiOjE2MDg1MTE2NzgsImF6cCI6IkhmYUxwOTNPcDkwT3NRTzZhUUNHZ2dBUktsODZJUmlTIiwic2NvcGUiOiIiLCJwZXJtaXNzaW9ucyI6WyJkZWxldGU6YWN0b3JzIiwiZGVsZXRlOm1vdmllcyIsImdldDphY3RvcnMiLCJnZXQ6bW92aWVzIiwicGF0Y2g6YWN0b3JzIiwicGF0Y2g6bW92aWVzIiwicG9zdDphY3RvcnMiLCJwb3N0Om1vdmllcyJdfQ.SllgJI9ngzUdQTBdO5yU2A93w9r_jT9QBwqCINqrIPhRehTqhA-_CsqCAp2AUj9N0Q3TSNvJpIrYuy84_cvbUUv6CwTIKZcaJSHlAtMP39wLSlW4QcT00jL2_lUircM7-Z_DbVUK530I2RgX7huzdL7EJogsBw-eby-2C-uRiN517HB7vYXR2Py1a1xMhpxAoqp44hB1bMvtkz95sg9vuAXhbzqCzH9hHQ1z0eQxiJvhhoTD0_Je2JtLG913uOvoMm8dLq8HAbHPPhNUg5esxn0IirwxFrrlPvOQ07Q3ZdavQXIRQfunjpvzYaZD1yNyWOXIyK7WYpJfnRrso6bqpQ'
+token_producer1 = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjR1dkhfMVdMTEtoZkdkZVF1eWtobiJ9.eyJpc3MiOiJodHRwczovL2NvZmZlZWFwcGgudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDVmZGZkNDA2YmJjNGY5MDA2ZjFmNTcyMSIsImF1ZCI6Im1vdmllLWNhc3RpbmctYWdlbmN5IiwiaWF0IjoxNjA4NTY3ODcxLCJleHAiOjE2MDg1NzUwNzEsImF6cCI6IkhmYUxwOTNPcDkwT3NRTzZhUUNHZ2dBUktsODZJUmlTIiwic2NvcGUiOiIiLCJwZXJtaXNzaW9ucyI6WyJkZWxldGU6YWN0b3JzIiwiZGVsZXRlOm1vdmllcyIsImdldDphY3RvcnMiLCJnZXQ6bW92aWVzIiwicGF0Y2g6YWN0b3JzIiwicGF0Y2g6bW92aWVzIiwicG9zdDphY3RvcnMiLCJwb3N0Om1vdmllcyJdfQ.gokzKug0jxiVbrn6F4W80Fw1qwRIxVgs9uXusHUK-M9uRn_hFZ9EcTz7imrm8JHucqeHvpdKNzH5NO3_9L_3Fz65boqGSNqHdjxWaMaX4iHoNppkhXc_nOTU0qLgD9InSER6rboq_K-VDFQSbpAB-W5WOrtOa3ErYjycvpuEVrnBMW2MROG7bqaw3SERPnq-6WA18RxcHNRdpotMf1kudQLuIChjzKiavSWmrmWxWuyn-smfrtIhEvTQobu50TfkhOVtdiWDGNqhf7ClMy0UDZq8A03TYDbnf71HXxWh2ez9h-ji1mMNHAOVdulWUaTq_z1wWHI4ADATGo1OqOawPQ'
 
 
 class CastingAgencyTestCase(unittest.TestCase):
@@ -46,8 +46,6 @@ class CastingAgencyTestCase(unittest.TestCase):
         '''No actors to find yet'''
         res = self.client().get('/actors',
                                 headers={'Authorization': token_assistant1})
-        data = json.loads(res.data)
-
         self.assertEqual(res.status_code, 404)
 
     def test_get_movies_401(self):
@@ -75,9 +73,9 @@ class CastingAgencyTestCase(unittest.TestCase):
             .format()
         res = self.client().post('/actors', json=test_actor_1,
                                  headers={'Authorization': token_director1})
-        data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
         self.assertEqual(data['success'], True)
 
         res = self.client().get('/actors',
@@ -157,6 +155,7 @@ class CastingAgencyTestCase(unittest.TestCase):
 
         res2 = self.client().get('/actors',
                                  headers={'Authorization': token_director1})
+        self.assertEqual(res2.status_code, 200)
         data2 = json.loads(res2.data)
         self.assertEqual(data2['success'], True)
         self.assertIsNotNone(data2['actors'])

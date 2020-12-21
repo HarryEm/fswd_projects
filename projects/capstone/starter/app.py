@@ -1,15 +1,18 @@
 from os import environ as env
+from functools import wraps
 
 from dotenv import load_dotenv, find_dotenv
-from flask import Flask, request, abort, jsonify, session
+from flask import Flask, request, abort, jsonify, session, url_for,\
+    render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from authlib.integrations.flask_client import OAuth
+from six.moves.urllib.parse import urlencode
 
 from models import setup_db, Movie, Actor
 from auth import AuthError, requires_auth
 import constants
-# breakpoint()
+
 ENV_FILE = find_dotenv()
 if ENV_FILE:
     load_dotenv(ENV_FILE)
@@ -41,6 +44,15 @@ def create_app(test_config=None):
                            'GET,PATCH,POST,DELETE,OPTIONS')
 
       return response
+
+  def requires_login(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if constants.PROFILE_KEY not in session:
+            return redirect('/login')
+        return f(*args, **kwargs)
+
+    return decorated
 
   # OAuth setup and endpoints
   oauth = OAuth(app)
@@ -74,7 +86,7 @@ def create_app(test_config=None):
       #     'name': userinfo['name'],
       #     'picture': userinfo['picture']
       # }
-      return redirect('/')
+      return redirect('/dashboard')
 
   @app.route('/login')
   def login():
@@ -86,11 +98,18 @@ def create_app(test_config=None):
     session.clear()
     params = {'returnTo':
               url_for('home', _external=True), 'client_id': AUTH0_CLIENT_ID}
-    return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
+    return redirect(auth0.api_base_url + '/logout?' + urlencode(params))
+
+  @app.route('/dashboard')
+  @requires_login
+  def dashboard():
+    return render_template('dashboard.html',
+                           token=session.get('token'),
+                           )
 
   @app.route('/')
-  def hello_world():
-      return 'Hello, World from Flask!\n'
+  def home():
+      return render_template('home.html')
 
   @app.route('/actors', methods=['GET'])
   @requires_auth(permission='get:actors')
