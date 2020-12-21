@@ -74,9 +74,9 @@ def create_app(test_config=None):
   def callback_handling():
     try:
       auth = auth0.authorize_access_token()
-      user = auth0.get('userinfo')
-      userinfo = user.json()
-
+      resp = auth0.get('userinfo')
+      userinfo = resp.json()
+      print(userinfo)
       # store jwt in session
       session['token'] = auth['access_token']
       # store username in session
@@ -110,14 +110,14 @@ def create_app(test_config=None):
   @requires_login
   @app.route('/dashboard')
   def dashboard():
-    return render_template('dashboard.html',
-                           token=session.get('token'),
-                           user=session.get('user')
-                           )
+    return render_template(
+        'dashboard.html',
+        userinfo=session[constants.PROFILE_KEY],
+        userinfo_pretty=json.dumps(session[constants.JWT_PAYLOAD], indent=4)
+    )
 
   @app.route('/')
   def home():
-      # return "hello"
       return render_template('home.html')
 
   @app.route('/actors', methods=['GET'])
