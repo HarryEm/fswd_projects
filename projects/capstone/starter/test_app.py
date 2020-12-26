@@ -1,16 +1,19 @@
 # import os
 import unittest
 import json
+from os import environ as env
 from flask_sqlalchemy import SQLAlchemy
 
 from app import create_app
 from models import setup_db, db_drop_and_create_all, Movie, Actor
 
-token_assistant1 = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjR1dkhfMVdMTEtoZkdkZVF1eWtobiJ9.eyJpc3MiOiJodHRwczovL2NvZmZlZWFwcGgudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDVmZGZjYzNjNDUyMjY4MDA3NTU5ZGU2MCIsImF1ZCI6Im1vdmllLWNhc3RpbmctYWdlbmN5IiwiaWF0IjoxNjA4OTk4NzE3LCJleHAiOjE2MDkwMDU5MTcsImF6cCI6IkhmYUxwOTNPcDkwT3NRTzZhUUNHZ2dBUktsODZJUmlTIiwic2NvcGUiOiIiLCJwZXJtaXNzaW9ucyI6WyJnZXQ6YWN0b3JzIiwiZ2V0Om1vdmllcyJdfQ.D7hRSDpF2q90wJyK63BFlxBZiCkx0iTDw0rOd4ESaceqlk2mmWVEFwCxuONLkND2u7WMo8R1wpLe7K1_xhPYf_sambzcXZaYuPFslbshRempQcIcLViyPFO1l1hHEf0zMmkGCsCbhkv_uYpMGIYpk8Vwmf0VrYfxp4omVqP6KhUlBm5IzlR6Mc3rmh29-KeUyNXR5N0UEscTMhhnAhSgC4NqLqBEHrBGY3yVcsKI72wpHeVDj-ynY0Upe1dAkcWNkfxu_Qes4tis0LQIPC5qyee2zNPMHF4xypZ-9nmDz6YBS3qzDc8tjZdzCLo8ufEhfvfYvL9C51w0FEKrscpebg'
+token_assistant1 = env.get('TOKEN_ASSISTANT_ONE')
+token_director1 = env.get('TOKEN_DIRECTOR_ONE')
+token_producer1 = env.get('TOKEN_PRODUCER_ONE')
 
-token_director1 = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjR1dkhfMVdMTEtoZkdkZVF1eWtobiJ9.eyJpc3MiOiJodHRwczovL2NvZmZlZWFwcGgudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDVmZGZjZTEyZTAwYTgzMDA2ZTg5MDEzZSIsImF1ZCI6Im1vdmllLWNhc3RpbmctYWdlbmN5IiwiaWF0IjoxNjA4OTk5MjA3LCJleHAiOjE2MDkwMDY0MDcsImF6cCI6IkhmYUxwOTNPcDkwT3NRTzZhUUNHZ2dBUktsODZJUmlTIiwic2NvcGUiOiIiLCJwZXJtaXNzaW9ucyI6WyJkZWxldGU6YWN0b3JzIiwiZ2V0OmFjdG9ycyIsImdldDptb3ZpZXMiLCJwYXRjaDphY3RvcnMiLCJwYXRjaDptb3ZpZXMiLCJwb3N0OmFjdG9ycyJdfQ.wPUyrW_8NHzKnLeg_QtumVEipfnfggm1eg66nkt1G7pAQF3s1ZPks4UNPZLwqHOi_wLTUm05tljJCDgzN0tCj_lkNNv6yP-O_ZUs5djdTBa-hz9kbClLhZOXbutwmADTx-ZVngbHQDDwybcSPCwn6X5vrmCenqGaVgKqxFQ_NaSGTn8e939bw4-vsPIFxJ0GU9IelNBBrZiiWkfhFYxU86AMUsto87wQH5YyEnKFO_9JQdxAO6ptGIdXzxwk9Em4lO1c993mGgQp1fiZ_ZnflJiQm-vUjPt_8mhFm4ws1ai3HykMYURylyW93CZMsl9ALPBfZLMlnl9dfpyCiJfwfA'
-
-token_producer1 = 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjR1dkhfMVdMTEtoZkdkZVF1eWtobiJ9.eyJpc3MiOiJodHRwczovL2NvZmZlZWFwcGgudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDVmZGZkNDA2YmJjNGY5MDA2ZjFmNTcyMSIsImF1ZCI6Im1vdmllLWNhc3RpbmctYWdlbmN5IiwiaWF0IjoxNjA4OTk5MjkxLCJleHAiOjE2MDkwMDY0OTEsImF6cCI6IkhmYUxwOTNPcDkwT3NRTzZhUUNHZ2dBUktsODZJUmlTIiwic2NvcGUiOiIiLCJwZXJtaXNzaW9ucyI6WyJkZWxldGU6YWN0b3JzIiwiZGVsZXRlOm1vdmllcyIsImdldDphY3RvcnMiLCJnZXQ6bW92aWVzIiwicGF0Y2g6YWN0b3JzIiwicGF0Y2g6bW92aWVzIiwicG9zdDphY3RvcnMiLCJwb3N0Om1vdmllcyJdfQ.FtLiCehK5OKSePbQhrQi28t4_yAL5D7hqS-ytSQnggRDLUz2Dn-OYsuDuT0a3d4MajBHwU7yp2uHs3urp3ziuzK0W6BuXNry_CrF_H7XOZ9TLpOv2no24SafB082upGrKnH0sK5UKBOyR9-b_GlnXl-HYeGkjt63mqroouXhT0mcvumzU3TcpII_L9Z_auSd_OqRRbey7jflanTsLEJZ57sW2-LqpmPacqrWg0Yj32vZgH6EillOSHUBCDDK-AOx_JWiiGyWkm_9CwL2EZb5je23jSNXkoBzu_4yBY56gMTMCWJy0JPxxs_395KPnrGBMVZ89unbJqaIt54e2T4yMQ'
+headers_assistant1 = {'Authorization': 'Bearer ' + str(token_assistant1)}
+headers_director1 = {'Authorization': 'Bearer ' + str(token_director1)}
+headers_producer1 = {'Authorization': 'Bearer ' + str(token_producer1)}
 
 
 class CastingAgencyTestCase(unittest.TestCase):
@@ -45,7 +48,7 @@ class CastingAgencyTestCase(unittest.TestCase):
     def test_get_actors_404(self):
         '''No actors to find yet'''
         res = self.client().get('/actors',
-                                headers={'Authorization': token_assistant1})
+                                headers=headers_assistant1)
         self.assertEqual(res.status_code, 404)
 
     def test_get_movies_401(self):
@@ -55,7 +58,7 @@ class CastingAgencyTestCase(unittest.TestCase):
     def test_get_movies_404(self):
         '''No actors to find yet'''
         res = self.client().get('/movies',
-                                headers={'Authorization': token_assistant1})
+                                headers=headers_assistant1)
         self.assertEqual(res.status_code, 404)
 
     def test_create_new_actor_401(self):
@@ -65,21 +68,21 @@ class CastingAgencyTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 401)
 
         res2 = self.client().post('/actors', json=test_actor_1,
-                                  headers={'Authorization': token_assistant1})
+                                  headers=headers_assistant1)
         self.assertEqual(res2.status_code, 401)
 
     def test_create_new_actor(self):
         test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
             .format()
         res = self.client().post('/actors', json=test_actor_1,
-                                 headers={'Authorization': token_director1})
+                                 headers=token_director1)
 
         self.assertEqual(res.status_code, 200)
         data = json.loads(res.data)
         self.assertEqual(data['success'], True)
 
         res = self.client().get('/actors',
-                                headers={'Authorization': token_director1})
+                                headers=token_director1)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -91,14 +94,14 @@ class CastingAgencyTestCase(unittest.TestCase):
         test_movie_1 = Movie(title="Night Club", release_date="1999-11-12")\
             .format()
         res = self.client().post('/movies', json=test_movie_1,
-                                 headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         self.assertEqual(res.status_code, 200)
         data = json.loads(res.data)
 
         self.assertEqual(data['success'], True)
 
         res2 = self.client().get('/movies',
-                                headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         self.assertEqual(res2.status_code, 200)
         data2 = json.loads(res2.data)
 
@@ -110,17 +113,17 @@ class CastingAgencyTestCase(unittest.TestCase):
         test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
             .format()
         res = self.client().post('/actors', json=test_actor_1,
-                                 headers={'Authorization': token_director1})
+                                 headers=token_director1)
         self.assertEqual(res.status_code, 200)
 
         res2 = self.client().patch('/actors/1', json={"name": "Brad Pitt"},
-                                   headers={'Authorization': token_director1})
+                                   headers=token_director1)
         data2 = json.loads(res2.data)
         self.assertEqual(res2.status_code, 200)
         self.assertEqual(data2['actor']['name'], "Brad Pitt")
 
         res3 = self.client().get('/actors',
-                                 headers={'Authorization': token_director1})
+                                 headers=token_director1)
         data = json.loads(res3.data)
         self.assertEqual(data['success'], True)
         self.assertIsNotNone(data['actors'])
@@ -130,18 +133,18 @@ class CastingAgencyTestCase(unittest.TestCase):
         test_movie_1 = Movie(title="Night Club", release_date="1999-11-12")\
             .format()
         res = self.client().post('/movies', json=test_movie_1,
-                                 headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         self.assertEqual(res.status_code, 200)
 
         res2 = self.client().patch('/movies/1', json={"title": "Fight Club"},
-                                   headers={'Authorization': token_producer1})
+                                   headers=token_producer1)
 
         data2 = json.loads(res2.data)
         self.assertEqual(res2.status_code, 200)
         self.assertEqual(data2['movie']['title'], "Fight Club")
 
         res3 = self.client().get('/movies',
-                                 headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         data3 = json.loads(res3.data)
         self.assertEqual(data3['success'], True)
         self.assertIsNotNone(data3['movies'])
@@ -151,10 +154,10 @@ class CastingAgencyTestCase(unittest.TestCase):
         test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
             .format()
         res = self.client().post('/actors', json=test_actor_1,
-                                 headers={'Authorization': token_director1})
+                                 headers=token_director1)
 
         res2 = self.client().get('/actors',
-                                 headers={'Authorization': token_director1})
+                                 headers=token_director1)
         self.assertEqual(res2.status_code, 200)
         data2 = json.loads(res2.data)
         self.assertEqual(data2['success'], True)
@@ -162,24 +165,24 @@ class CastingAgencyTestCase(unittest.TestCase):
         self.assertEqual(len(data2['actors']), 1)
 
         res3 = self.client().delete('/actors/1',
-                                    headers={'Authorization': token_director1})
+                                    headers=token_director1)
         data3 = json.loads(res3.data)
         self.assertEqual(data3['success'], True)
         self.assertEqual(data3['delete'], 1)
 
         res4 = self.client().get('/actors',
-                                 headers={'Authorization': token_director1})
+                                 headers=token_director1)
         self.assertEqual(res4.status_code, 404)
 
     def test_delete_movie(self):
         test_movie_1 = Movie(title="Night Club", release_date="1999-11-12")\
             .format()
         res = self.client().post('/movies', json=test_movie_1,
-                                 headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         self.assertEqual(res.status_code, 200)
 
         res2 = self.client().get('/movies',
-                                 headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         self.assertEqual(res2.status_code, 200)
         data2 = json.loads(res2.data)
         self.assertEqual(data2['success'], True)
@@ -187,58 +190,58 @@ class CastingAgencyTestCase(unittest.TestCase):
         self.assertEqual(len(data2['movies']), 1)
 
         res3 = self.client().delete('/movies/1',
-                                    headers={'Authorization': token_producer1})
+                                    headers=token_producer1)
         self.assertEqual(res3.status_code, 200)
         data3 = json.loads(res3.data)
         self.assertEqual(data3['success'], True)
         self.assertEqual(data3['delete'], 1)
 
         res4 = self.client().get('/movies',
-                                 headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         self.assertEqual(res4.status_code, 404)
 
     def test_edit_invalid_actor(self):
         test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
             .format()
         res = self.client().post('/actors', json=test_actor_1,
-                                 headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         self.assertEqual(res.status_code, 200)
 
         res2 = self.client().patch('/actors/99999', json={"name": "Brad Pitt"},
-                                   headers={'Authorization': token_producer1})
+                                   headers=token_producer1)
         self.assertEqual(res2.status_code, 404)
 
     def test_delete_invalid_actor(self):
         test_actor_1 = Actor(name="Brad Bitt", age="57", gender="Male")\
             .format()
         res = self.client().post('/actors', json=test_actor_1,
-                                 headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         self.assertEqual(res.status_code, 200)
 
         res2 = self.client().delete('/actors/99999',
-                                    headers={'Authorization': token_producer1})
+                                    headers=token_producer1)
         self.assertEqual(res2.status_code, 404)
 
     def test_edit_invalid_movie(self):
         test_movie_1 = Movie(title="Night Club", release_date="1999-11-12")\
             .format()
         res = self.client().post('/movies', json=test_movie_1,
-                                 headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         self.assertEqual(res.status_code, 200)
 
         res2 = self.client().patch('/movies/99999', json={"name": "Brad Pitt"},
-                                   headers={'Authorization': token_producer1})
+                                   headers=token_producer1)
         self.assertEqual(res2.status_code, 404)
 
     def test_delete_invalid_movie(self):
         test_movie_1 = Movie(title="Night Club", release_date="1999-11-12")\
             .format()
         res = self.client().post('/movies', json=test_movie_1,
-                                 headers={'Authorization': token_producer1})
+                                 headers=token_producer1)
         self.assertEqual(res.status_code, 200)
 
         res2 = self.client().delete('/movies/99999',
-                                    headers={'Authorization': token_producer1})
+                                    headers=token_producer1)
         self.assertEqual(res2.status_code, 404)
 
 

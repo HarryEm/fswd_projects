@@ -8,6 +8,14 @@ The app enables you to view, create, delete, and edit both actors and movies.
 Each actor can be assigned to multiple movies and each movie can also be
 assigned multiple actors.
 
+## Motivation
+
+Running a Movie Casting Agency is hard work and its particularly difficult keeping
+track of actors and movies in an industry which is so fast moving. Every day
+there are changes and instead of attempting to maintain a physical record of the
+comings & goings, an app which manages an online database is far preferable.
+It also calls for different permissions dependining on how senior someone's role is. 
+
 ## Using the app
 
 The app has been deployed to heroku and can be accessed at https://movie-casting-agency.herokuapp.com/

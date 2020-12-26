@@ -1,5 +1,5 @@
 import json
-# from os import environ as env
+from os import environ as env
 
 from flask import request, _request_ctx_stack, abort
 from functools import wraps
@@ -7,10 +7,9 @@ from jose import jwt
 from urllib.request import urlopen
 
 
-AUTH0_DOMAIN = 'coffeeapph.us.auth0.com'
-# AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN')
-ALGORITHMS = ['RS256']
-API_AUDIENCE = 'movie-casting-agency'
+AUTH0_DOMAIN = env.get('AUTH0_DOMAIN')
+ALGORITHMS = json.loads(env.get('ALGORITHMS'))
+API_AUDIENCE = env.get('API_AUDIENCE')
 
 
 class AuthError(Exception):
@@ -112,7 +111,8 @@ def verify_decode_jwt(token):
         except jwt.JWTClaimsError:
             raise AuthError({
                 'code': 'invalid_claims',
-                'description': 'Incorrect claims. Please, check the audience and issuer.'
+                'description': 'Incorrect claims. '
+                        'Please, check the audience and issuer.'
             }, 401)
         except Exception:
             raise AuthError({
