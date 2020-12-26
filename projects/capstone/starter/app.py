@@ -230,7 +230,7 @@ def create_app(test_config=None):
   def delete_actor(payload, id):
     actor = Actor.query.filter(Actor.id == id).one_or_none()
 
-    # Check drink exists
+    # Check actor exists
     if not actor:
         abort(404)
 
@@ -249,7 +249,7 @@ def create_app(test_config=None):
   def delete_movie(payload, id):
     movie = Movie.query.filter(Movie.id == id).one_or_none()
 
-    # Check drink exists
+    # Check movie exists
     if not movie:
         abort(404)
 
@@ -272,7 +272,7 @@ def create_app(test_config=None):
       }), 404
 
   @app.errorhandler(405)
-  def not_found(error):
+  def not_allowed(error):
       return jsonify({
           "success": False,
           "error": 405,
@@ -280,7 +280,7 @@ def create_app(test_config=None):
       }), 405
 
   @app.errorhandler(422)
-  def not_found(error):
+  def unprocessable(error):
       return jsonify({
           "success": False,
           "error": 422,
@@ -288,7 +288,7 @@ def create_app(test_config=None):
       }), 422
 
   @app.errorhandler(500)
-  def not_found(error):
+  def internal_error(error):
       return jsonify({
           "success": False,
           "error": 500,
@@ -296,7 +296,7 @@ def create_app(test_config=None):
       }), 500
 
   @app.errorhandler(AuthError)
-  def unprocessable(error):
+  def auth_error(error):
       return jsonify({
                       "success": False,
                       "error": "AuthError",

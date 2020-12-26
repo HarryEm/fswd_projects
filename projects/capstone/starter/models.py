@@ -2,7 +2,6 @@ import os
 from sqlalchemy import Column, Integer, String, Date
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-# import json
 
 # database_name = "movie_casting"
 # database_path = "postgres://{}/{}".format('localhost:5432', database_name)
